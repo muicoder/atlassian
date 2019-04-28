@@ -1,0 +1,15 @@
+#!/bin/bash
+
+zip=${1-*-*-*--*.zip}
+
+if [ -e $zip ]; then
+# https://confluence.atlassian.com/jira/removing-invalid-characters-from-xml-backups-12079.html
+wget -Nqc https://confluence.atlassian.com/jira/files/12079/242614279/1/1307570821061/atlassian-xml-cleaner-0.1.jar -O atlassian-xml-cleaner.jar
+# https://confluence.atlassian.com/jirakb/could-not-find-entity-for-entityname-when-restoring-a-xml-backup-into-a-jira-application-317951241.html
+wget -Nqc https://bitbucket.org/atlassianlabs/xml-purge/downloads/xml-purge-1.0-SNAPSHOT.jar -O xml-purge.jar
+unzip -o $zip
+	java -jar atlassian-xml-cleaner.jar entities.xml > entities-clean.xml
+	egrep -v "(QANDAA|QANDAQ|QANDAE|a_text|q_text|TimesheetEntity|TimesheetScheme|Myaa|ReportEntity|ReportScheme|LinkEntity|LinkScheme|WorklogExt|WorklogType|KPlugins|KPluginsCfg|cfgDefaultValue|cfgLDefaultValue|cfgValue|cfgLValue|jjlf_config|jjlf_project|jjlf_category|KListenerSils|JiraCapacityPlan|additionalTaskDescription|testexecutionhistory|KRSSecurity|KBlitzActions)" entities-clean.xml > entities-purged.xml
+	java -jar xml-purge.jar entities-purged.xml > entities.xml
+zip -r jira6to7.zip entities.xml activeobjects.xml; rm -fv *.xml
+fi
